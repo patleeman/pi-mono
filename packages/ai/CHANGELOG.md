@@ -2,9 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added `gpt-5.4` model entries for OpenAI, Azure OpenAI Responses, and OpenAI Codex generated catalogs.
+- Added `openai/gpt-5.4-fast` model alias. Requests use `gpt-5.4` with `service_tier: "priority"` by default (overrideable via `serviceTier`).
+
 ### Fixed
 
 - Preserved OpenAI Responses assistant `phase` metadata (`commentary`, `final_answer`) across turns by encoding `id` and `phase` in `textSignature` for session persistence and replay, with backward compatibility for legacy plain signatures ([#1819](https://github.com/badlogic/pi-mono/issues/1819)).
+- Fixed `supportsXhigh()` model detection to include GPT-5.4 model IDs (including `gpt-5.4-fast`).
+- Fixed OpenAI Codex reasoning-effort clamping so GPT-5.4 maps unsupported `minimal` effort to `low`.
 
 ## [0.56.1] - 2026-03-05
 

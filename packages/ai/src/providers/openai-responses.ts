@@ -89,7 +89,7 @@ export const streamOpenAIResponses: StreamFunction<"openai-responses", OpenAIRes
 			// Create OpenAI client
 			const apiKey = options?.apiKey || getEnvApiKey(model.provider) || "";
 			const client = createClient(model, context, apiKey, options?.headers);
-			const params = buildParams(model, context, options);
+			const { params, serviceTier } = buildParams(model, context, options);
 			options?.onPayload?.(params);
 			const openaiStream = await client.responses.create(
 				params,
@@ -98,7 +98,7 @@ export const streamOpenAIResponses: StreamFunction<"openai-responses", OpenAIRes
 			stream.push({ type: "start", partial: output });
 
 			await processResponsesStream(openaiStream, output, stream, model, {
-				serviceTier: options?.serviceTier,
+				serviceTier,
 				applyServiceTierPricing,
 			});
 
@@ -181,12 +181,37 @@ function createClient(
 	});
 }
 
-function buildParams(model: Model<"openai-responses">, context: Context, options?: OpenAIResponsesOptions) {
-	const messages = convertResponsesMessages(model, context, OPENAI_TOOL_CALL_PROVIDERS);
+function resolveRequestModelAndServiceTier(
+	model: Model<"openai-responses">,
+	requestedServiceTier: ResponseCreateParamsStreaming["service_tier"] | undefined,
+): { modelId: string; serviceTier: ResponseCreateParamsStreaming["service_tier"] | undefined } {
+	if (model.provider === "openai" && model.id === "gpt-5.4-fast") {
+		return {
+			modelId: "gpt-5.4",
+			serviceTier: requestedServiceTier ?? "priority",
+		};
+	}
 
+	return {
+		modelId: model.id,
+		serviceTier: requestedServiceTier,
+	};
+}
+
+function buildParams(
+	model: Model<"openai-responses">,
+	context: Context,
+	options?: OpenAIResponsesOptions,
+): {
+	params: ResponseCreateParamsStreaming;
+	serviceTier: ResponseCreateParamsStreaming["service_tier"] | undefined;
+} {
+	const messages = convertResponsesMessages(model, context, OPENAI_TOOL_CALL_PROVIDERS);
 	const cacheRetention = resolveCacheRetention(options?.cacheRetention);
+	const { modelId, serviceTier } = resolveRequestModelAndServiceTier(model, options?.serviceTier);
+
 	const params: ResponseCreateParamsStreaming = {
-		model: model.id,
+		model: modelId,
 		input: messages,
 		stream: true,
 		prompt_cache_key: cacheRetention === "none" ? undefined : options?.sessionId,
@@ -202,8 +227,8 @@ function buildParams(model: Model<"openai-responses">, context: Context, options
 		params.temperature = options?.temperature;
 	}
 
-	if (options?.serviceTier !== undefined) {
-		params.service_tier = options.serviceTier;
+	if (serviceTier !== undefined) {
+		params.service_tier = serviceTier;
 	}
 
 	if (context.tools) {
@@ -217,23 +242,21 @@ function buildParams(model: Model<"openai-responses">, context: Context, options
 				summary: options?.reasoningSummary || "auto",
 			};
 			params.include = ["reasoning.encrypted_content"];
-		} else {
-			if (model.name.startsWith("gpt-5")) {
-				// Jesus Christ, see https://community.openai.com/t/need-reasoning-false-option-for-gpt-5/1351588/7
-				messages.push({
-					role: "developer",
-					content: [
-						{
-							type: "input_text",
-							text: "# Juice: 0 !important",
-						},
-					],
-				});
-			}
+		} else if (model.name.startsWith("gpt-5")) {
+			// Jesus Christ, see https://community.openai.com/t/need-reasoning-false-option-for-gpt-5/1351588/7
+			messages.push({
+				role: "developer",
+				content: [
+					{
+						type: "input_text",
+						text: "# Juice: 0 !important",
+					},
+				],
+			});
 		}
 	}
 
-	return params;
+	return { params, serviceTier };
 }
 
 function getServiceTierCostMultiplier(serviceTier: ResponseCreateParamsStreaming["service_tier"] | undefined): number {

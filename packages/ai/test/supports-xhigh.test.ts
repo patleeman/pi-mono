@@ -19,4 +19,22 @@ describe("supportsXhigh", () => {
 		expect(model).toBeDefined();
 		expect(supportsXhigh(model!)).toBe(false);
 	});
+
+	it("returns true for OpenAI GPT-5.4", () => {
+		const model = getModel("openai", "gpt-5.4");
+		expect(model).toBeDefined();
+		expect(supportsXhigh(model!)).toBe(true);
+	});
+
+	it("returns true for OpenAI GPT-5.4 Fast alias", () => {
+		const model = getModel("openai", "gpt-5.4-fast");
+		expect(model).toBeDefined();
+		expect(supportsXhigh(model!)).toBe(true);
+	});
+
+	it("returns true for OpenAI Codex GPT-5.4", () => {
+		const model = getModel("openai-codex", "gpt-5.4");
+		expect(model).toBeDefined();
+		expect(supportsXhigh(model!)).toBe(true);
+	});
 });
