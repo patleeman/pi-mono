@@ -1,1 +1,1 @@
-export * from "./src/bedrock-provider.js";
+export * from "./dist/bedrock-provider.js";

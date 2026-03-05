@@ -784,46 +784,6 @@ async function generateModels() {
 		});
 	}
 
-	if (!allModels.some(m => m.provider === "openai" && m.id === "gpt-5.4")) {
-		allModels.push({
-			id: "gpt-5.4",
-			name: "GPT-5.4",
-			api: "openai-responses",
-			baseUrl: "https://api.openai.com/v1",
-			provider: "openai",
-			reasoning: true,
-			input: ["text", "image"],
-			cost: {
-				input: 2.5,
-				output: 15,
-				cacheRead: 0.25,
-				cacheWrite: 0,
-			},
-			contextWindow: 1050000,
-			maxTokens: 128000,
-		});
-	}
-
-	if (!allModels.some(m => m.provider === "openai" && m.id === "gpt-5.4-fast")) {
-		allModels.push({
-			id: "gpt-5.4-fast",
-			name: "GPT-5.4 Fast",
-			api: "openai-responses",
-			baseUrl: "https://api.openai.com/v1",
-			provider: "openai",
-			reasoning: true,
-			input: ["text", "image"],
-			cost: {
-				input: 2.5,
-				output: 15,
-				cacheRead: 0.25,
-				cacheWrite: 0,
-			},
-			contextWindow: 1050000,
-			maxTokens: 128000,
-		});
-	}
-
 	if (!allModels.some(m => m.provider === "openai" && m.id === "gpt-5.1-codex")) {
 		allModels.push({
 			id: "gpt-5.1-codex",
@@ -960,18 +920,6 @@ async function generateModels() {
 			reasoning: true,
 			input: ["text", "image"],
 			cost: { input: 1.75, output: 14, cacheRead: 0.175, cacheWrite: 0 },
-			contextWindow: CODEX_CONTEXT,
-			maxTokens: CODEX_MAX_TOKENS,
-		},
-		{
-			id: "gpt-5.4",
-			name: "GPT-5.4",
-			api: "openai-codex-responses",
-			provider: "openai-codex",
-			baseUrl: CODEX_BASE_URL,
-			reasoning: true,
-			input: ["text", "image"],
-			cost: { input: 2.5, output: 15, cacheRead: 0.25, cacheWrite: 0 },
 			contextWindow: CODEX_CONTEXT,
 			maxTokens: CODEX_MAX_TOKENS,
 		},
@@ -1404,12 +1352,7 @@ async function generateModels() {
 	}
 
 	const azureOpenAiModels: Model<Api>[] = allModels
-		.filter(
-			(model) =>
-				model.provider === "openai" &&
-				model.api === "openai-responses" &&
-				model.id !== "gpt-5.4-fast",
-		)
+		.filter((model) => model.provider === "openai" && model.api === "openai-responses")
 		.map((model) => ({
 			...model,
 			api: "azure-openai-responses",
